@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #FAFAF9; /* Stone 50 */
+    color: #1C1917; /* Stone 900 */
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Animasi masuk untuk notifikasi toast */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(1.5rem) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.animate-toast-in {
+  animation: toast-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Animasi masuk untuk modal */
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-modal-in {
+  animation: modal-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-toast-in,
+  .animate-modal-in {
+    animation: none;
+  }
+}
+
+/*
+| Pencetakan struk.
+|
+| Saat window.print() dipanggil, seluruh halaman disembunyikan kecuali elemen
+| ber-id `struk-cetak`, yang lalu ditempatkan sendirian di pojok kiri atas
+| kertas.
+|
+| Cara ini dipilih daripada membuka jendela baru berisi struk: pemblokir pop-up
+| kerap menghalanginya tanpa pesan apa pun, dan kasir tidak akan tahu kenapa
+| struknya tidak keluar. Menyembunyikan halaman selalu berhasil.
+*/
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #struk-cetak,
+  #struk-cetak * {
+    visibility: visible;
+  }
+
+  #struk-cetak {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 58mm !important;
+    margin: 0;
+    padding: 2mm !important;
+    box-shadow: none !important;
+    /* Warna dipaksa tercetak; sebagian browser membuang latar demi tinta. */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Latar modal, tombol, dan bilah samping tidak boleh ikut memakan kertas. */
+  .no-print {
+    display: none !important;
+  }
+
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+}
