@@ -26,6 +26,7 @@ const JUDUL_HALAMAN: Record<string, string> = {
   '/penjualan/riwayat': 'Penjualan — Riwayat',
   '/penjualan/dashboard': 'Penjualan — Dashboard',
   '/pengaturan': 'Pengaturan',
+  '/laporan': 'Laporan',
 };
 
 export const DashboardLayout: React.FC = () => {

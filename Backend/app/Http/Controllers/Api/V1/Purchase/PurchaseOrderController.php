@@ -447,7 +447,7 @@ class PurchaseOrderController extends Controller
             ->when($filters['date_to'] ?? null, fn ($q, $d) => $q->whereDate('receipt_date', '<=', $d))
             ->orderByDesc('receipt_date')
             ->orderByDesc('id')
-            ->paginate($filters['per_page'] ?? 15)
+            ->paginate($filters['per_page'] ?? 10)
             ->withQueryString();
 
         return $this->paginated(

@@ -1,5 +1,10 @@
 # Modul 5 — Tracking Produksi
 
+> **Hak akses sudah berubah.** Berkas ini menggambarkan pembagian peran
+> saat modul dibangun, ketika sistem masih memakai `admin_produksi`. Sejak
+> 20 Juli 2026 peran itu dipecah menjadi Admin Gudang dan Kepala Produksi —
+> lihat [MIGRASI-PERAN.md](MIGRASI-PERAN.md) untuk pembagian yang berlaku.
+
 > Lanjutan langsung dari [Modul 4 — Produksi (BOM)](MODUL-4-PRODUKSI.md).
 > Modul 4 membuat batch berstatus "Diproses"; modul ini memecah status tunggal
 > itu menjadi tujuh tahap berurutan dengan pencatatan waktu dan operator.

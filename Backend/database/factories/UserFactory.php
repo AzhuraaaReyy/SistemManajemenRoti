@@ -30,7 +30,9 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
-            'role' => fake()->randomElement(UserRole::values()),
+            // assignableValues(), bukan values(): peran usang tidak boleh
+            // muncul pada data yang baru dibuat.
+            'role' => fake()->randomElement(UserRole::assignableValues()),
             'phone' => fake()->numerify('08##########'),
             'is_active' => true,
             'remember_token' => Str::random(10),
@@ -42,9 +44,14 @@ class UserFactory extends Factory
         return $this->state(fn () => ['role' => UserRole::OWNER->value]);
     }
 
-    public function adminProduksi(): static
+    public function adminGudang(): static
     {
-        return $this->state(fn () => ['role' => UserRole::ADMIN_PRODUKSI->value]);
+        return $this->state(fn () => ['role' => UserRole::ADMIN_GUDANG->value]);
+    }
+
+    public function kepalaProduksi(): static
+    {
+        return $this->state(fn () => ['role' => UserRole::KEPALA_PRODUKSI->value]);
     }
 
     public function kasir(): static

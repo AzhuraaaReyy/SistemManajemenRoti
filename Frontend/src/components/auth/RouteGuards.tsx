@@ -38,6 +38,27 @@ export const GuestRoute: React.FC = () => {
 };
 
 /**
+ * Pengalihan `/master` ke sub-halaman yang memang boleh dibuka pengguna.
+ *
+ * Master Data tidak punya halaman induk. Sebelum peran dipisah, alamat ini
+ * selalu dialihkan ke /master/bahan-baku — tujuan yang kini menghasilkan
+ * "Akses Ditolak" bagi Kepala Produksi, yang tidak mengurus bahan baku.
+ *
+ * Dapur diarahkan ke Resep; sisanya (Owner dan Gudang) tetap ke Bahan Baku
+ * seperti sebelumnya.
+ */
+export const MasterIndexRedirect: React.FC = () => {
+  const { user } = useAuth();
+
+  return (
+    <Navigate
+      to={user?.role === 'kepala_produksi' ? '/master/resep' : '/master/bahan-baku'}
+      replace
+    />
+  );
+};
+
+/**
  * Pembatas berdasarkan peran.
  *
  * Ini hanya lapisan tampilan. Penegakan yang sesungguhnya ada di middleware

@@ -44,7 +44,7 @@ class StockAlertController extends Controller
             ->ofStatus($filters['status'] ?? null)
             ->ofItemKind($filters['kind'] ?? null)
             ->latest('id')
-            ->paginate($filters['per_page'] ?? 20)
+            ->paginate($filters['per_page'] ?? 10)
             ->withQueryString();
 
         return $this->paginated(

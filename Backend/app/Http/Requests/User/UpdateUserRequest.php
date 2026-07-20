@@ -29,7 +29,9 @@ class UpdateUserRequest extends FormRequest
             ],
             // Kata sandi hanya diproses bila diisi — form edit boleh dikosongkan.
             'password' => ['nullable', 'string', 'confirmed', Password::min(8)->letters()->numbers()],
-            'role' => ['sometimes', 'required', Rule::in(UserRole::values())],
+            // assignableValues(): akun berperan usang bisa dipindahkan keluar,
+            // tapi tidak ada yang bisa dipindahkan masuk.
+            'role' => ['sometimes', 'required', Rule::in(UserRole::assignableValues())],
             'phone' => ['nullable', 'string', 'regex:/^[0-9+\-\s()]{8,20}$/'],
             'is_active' => ['sometimes', 'boolean'],
         ];

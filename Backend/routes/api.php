@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\Inventory\InventoryController;
+use App\Http\Controllers\Api\V1\OwnerDashboardController;
 use App\Http\Controllers\Api\V1\Inventory\StockAlertController;
 use App\Http\Controllers\Api\V1\MasterData\CategoryController;
 use App\Http\Controllers\Api\V1\MasterData\IngredientController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Api\V1\Production\ProductionBatchController;
 use App\Http\Controllers\Api\V1\Production\ProductionDashboardController;
 use App\Http\Controllers\Api\V1\Production\ProductionTrackingController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\Purchase\PurchaseDashboardController;
 use App\Http\Controllers\Api\V1\Purchase\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\Sales\SaleController;
@@ -66,6 +68,39 @@ Route::middleware(['auth:api', 'active'])->group(function () {
     });
 
     /*
+    |--------------------------------------------------------------------------
+    | Modul 8 — Dashboard Owner
+    |--------------------------------------------------------------------------
+    |
+    | Ringkasan tingkat tertinggi: agregasi penjualan, produksi, persediaan,
+    | dan pembelian dalam satu permintaan. Murni membaca, tanpa tabel baru.
+    |
+    | Khusus Owner — memakai middleware `role` yang sama dengan seluruh sistem.
+    */
+    Route::get('dashboard/owner', [OwnerDashboardController::class, 'index'])
+        ->middleware('role:owner');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Modul 9 — Laporan
+    |--------------------------------------------------------------------------
+    |
+    | Pusat pelaporan formal, terpisah dari Dashboard Owner yang ringkas dan
+    | real-time. Murni membaca — tidak ada tabel baru.
+    |
+    | Khusus Owner: laporan memuat laba kotor, HPP, dan performa per kasir —
+    | angka yang tidak dibagikan ke staf.
+    |
+    | Rute export didaftarkan SEBELUM rute {type} agar tidak tertangkap polanya.
+    */
+    Route::prefix('reports')->middleware('role:owner')->group(function () {
+        Route::get('types', [ReportController::class, 'types']);
+        Route::get('{type}/export/excel', [ReportController::class, 'exportExcel']);
+        Route::get('{type}/export/pdf', [ReportController::class, 'exportPdf']);
+        Route::get('{type}', [ReportController::class, 'show']);
+    });
+
+    /*
     | Manajemen Pengguna — khusus Owner.
     */
     Route::middleware('role:owner')->group(function () {
@@ -79,39 +114,84 @@ Route::middleware(['auth:api', 'active'])->group(function () {
     | Modul 2 — Master Data
     |--------------------------------------------------------------------------
     |
-    | Owner dan Admin Produksi boleh mengelola. Kasir tidak diberi akses:
-    | ia hanya perlu membaca daftar produk, dan itu disediakan endpoint
-    | penjualan tersendiri pada Modul 6 — bukan lewat master data.
+    | Kasir tidak diberi akses sama sekali: ia hanya perlu membaca daftar
+    | produk, dan itu disediakan endpoint penjualan tersendiri pada Modul 7 —
+    | bukan lewat master data.
     |
-    | Rute statis (options, units, statistics) didaftarkan SEBELUM apiResource
-    | agar tidak tertangkap pola {id} dan dikira detail sebuah data.
+    | Sisanya dipilah antara gudang dan dapur, dan pemilahannya TIDAK bisa utuh
+    | per sumber daya. Kepala Produksi menyusun resep dari bahan baku; kalau
+    | `ingredients` menjadi milik gudang sepenuhnya, pemilih bahan pada formulir
+    | resep akan 403 dan resep tidak bisa dibuat sama sekali. Karena itu bahan
+    | baku dan produk dipilah BACA vs TULIS, bukan dipilah utuh:
+    |
+    |   Kategori     baca+tulis  Gudang & Dapur   (dipakai keduanya, punya kolom
+    |                                              `type`; menyaringnya per peran
+    |                                              berarti menyembunyikan aturan
+    |                                              otorisasi di dalam query)
+    |   Supplier     baca+tulis  Gudang
+    |   Bahan Baku   baca        Gudang & Dapur
+    |                tulis       Gudang
+    |   Produk       baca        Gudang & Dapur   (gudang melihatnya lewat stok
+    |                                              produk jadi di Persediaan)
+    |                tulis       Dapur
+    |   Resep        baca+tulis  Dapur
+    |
+    | Rute statis (options, units, statistics) didaftarkan SEBELUM pola {id}
+    | agar tidak tertangkap dan dikira detail sebuah data. Urutan itu berlaku
+    | lintas kelompok middleware — Laravel mencocokkan sesuai urutan pendaftaran,
+    | bukan per kelompok.
     */
-    Route::prefix('master')->middleware('role:owner,admin_produksi')->group(function () {
+    Route::prefix('master')->group(function () {
 
-        // --- Kategori ---
-        Route::get('categories/options', [CategoryController::class, 'options']);
-        Route::apiResource('categories', CategoryController::class);
+        // --- Kategori: dipakai bersama ---
+        Route::middleware('role:owner,admin_gudang,kepala_produksi')->group(function () {
+            Route::get('categories/options', [CategoryController::class, 'options']);
+            Route::apiResource('categories', CategoryController::class);
+        });
 
-        // --- Supplier ---
-        Route::get('suppliers/options', [SupplierController::class, 'options']);
-        Route::apiResource('suppliers', SupplierController::class);
+        // --- Supplier: gudang ---
+        Route::middleware('role:owner,admin_gudang')->group(function () {
+            Route::get('suppliers/options', [SupplierController::class, 'options']);
+            Route::apiResource('suppliers', SupplierController::class);
+        });
 
-        // --- Bahan Baku ---
-        Route::get('ingredients/options', [IngredientController::class, 'options']);
-        Route::get('ingredients/units', [IngredientController::class, 'units']);
-        Route::get('ingredients/statistics', [IngredientController::class, 'statistics']);
-        Route::get('ingredients/{ingredient}/ledger', [IngredientController::class, 'ledger']);
-        Route::apiResource('ingredients', IngredientController::class);
+        // --- Bahan Baku: statis dulu, baru pola {ingredient} ---
+        Route::middleware('role:owner,admin_gudang,kepala_produksi')->group(function () {
+            Route::get('ingredients/options', [IngredientController::class, 'options']);
+            Route::get('ingredients/units', [IngredientController::class, 'units']);
+        });
 
-        // --- Produk ---
-        Route::get('products/options', [ProductController::class, 'options']);
-        Route::apiResource('products', ProductController::class);
+        Route::middleware('role:owner,admin_gudang')->group(function () {
+            Route::get('ingredients/statistics', [IngredientController::class, 'statistics']);
+            Route::get('ingredients/{ingredient}/ledger', [IngredientController::class, 'ledger']);
+        });
 
-        // --- Resep / Bill of Materials ---
-        Route::post('recipes/{recipe}/new-version', [RecipeController::class, 'newVersion']);
-        Route::patch('recipes/{recipe}/activate', [RecipeController::class, 'activate']);
-        Route::post('recipes/{recipe}/simulate', [RecipeController::class, 'simulate']);
-        Route::apiResource('recipes', RecipeController::class);
+        // Dapur boleh melihat bahan baku — tanpa itu resep tidak bisa disusun.
+        Route::middleware('role:owner,admin_gudang,kepala_produksi')->group(function () {
+            Route::apiResource('ingredients', IngredientController::class)->only(['index', 'show']);
+        });
+
+        Route::middleware('role:owner,admin_gudang')->group(function () {
+            Route::apiResource('ingredients', IngredientController::class)->except(['index', 'show']);
+        });
+
+        // --- Produk: gudang melihat, dapur mengubah ---
+        Route::middleware('role:owner,admin_gudang,kepala_produksi')->group(function () {
+            Route::get('products/options', [ProductController::class, 'options']);
+            Route::apiResource('products', ProductController::class)->only(['index', 'show']);
+        });
+
+        Route::middleware('role:owner,kepala_produksi')->group(function () {
+            Route::apiResource('products', ProductController::class)->except(['index', 'show']);
+        });
+
+        // --- Resep / Bill of Materials: dapur ---
+        Route::middleware('role:owner,kepala_produksi')->group(function () {
+            Route::post('recipes/{recipe}/new-version', [RecipeController::class, 'newVersion']);
+            Route::patch('recipes/{recipe}/activate', [RecipeController::class, 'activate']);
+            Route::post('recipes/{recipe}/simulate', [RecipeController::class, 'simulate']);
+            Route::apiResource('recipes', RecipeController::class);
+        });
     });
 
     /*
@@ -121,9 +201,11 @@ Route::middleware(['auth:api', 'active'])->group(function () {
     |
     | Alur: Supplier → Input Pembelian → Barang Datang → Tambah Stok → Riwayat
     |
-    | Owner dan Admin Produksi. Kasir tidak terlibat dalam pengadaan.
+    | Owner dan Admin Gudang. Pengadaan adalah pekerjaan gudang seutuhnya —
+    | ini satu-satunya modul yang pemilahannya tidak butuh pengecualian.
+    | Kasir dan Kepala Produksi tidak terlibat.
     */
-    Route::prefix('purchases')->middleware('role:owner,admin_produksi')->group(function () {
+    Route::prefix('purchases')->middleware('role:owner,admin_gudang')->group(function () {
 
         Route::get('dashboard', [PurchaseDashboardController::class, 'index']);
         Route::get('suppliers/{supplier}/performance', [PurchaseDashboardController::class, 'supplierPerformance']);
@@ -156,8 +238,11 @@ Route::middleware(['auth:api', 'active'])->group(function () {
     |
     | Seluruh pergerakan stok memakai stock_ledger yang sama dengan modul
     | pembelian. Tidak ada tabel mutasi baru.
+    |
+    | Owner dan Kepala Produksi. Gudang menyediakan bahannya, tapi tidak
+    | menjalankan batch dan tidak menutup tahap produksi.
     */
-    Route::prefix('production')->middleware('role:owner,admin_produksi')->group(function () {
+    Route::prefix('production')->middleware('role:owner,kepala_produksi')->group(function () {
 
         Route::get('dashboard', [ProductionDashboardController::class, 'index']);
         Route::get('statuses', [ProductionBatchController::class, 'statuses']);
@@ -196,28 +281,41 @@ Route::middleware(['auth:api', 'active'])->group(function () {
     | Satu-satunya endpoint yang menulis adalah penyesuaian manual, dan itu pun
     | tetap lewat StockService seperti modul lainnya.
     |
-    | Kasir tidak diberi akses: ia tidak mengelola persediaan, dan peran itu
-    | memang tidak punya menu `persediaan` di UserRole::allowedMenus().
+    | Kasir tidak diberi akses: ia tidak mengelola persediaan.
+    |
+    | Gudang dan Dapur sama-sama MEMBACA. Kepala produksi yang tidak bisa
+    | melihat stok tepung tidak bisa merencanakan batch — ia hanya akan tahu
+    | bahannya kurang setelah pembuatan batch ditolak, tanpa cara melihat
+    | mengapa.
+    |
+    | Penyesuaian manual hanya Gudang. Menyesuaikan stok berarti menyatakan
+    | bahwa hitungan fisik berbeda dari catatan sistem, dan yang memegang
+    | barangnya adalah gudang. Membukanya untuk dua peran berarti dua orang
+    | bisa mengoreksi angka yang sama tanpa siapa pun bertanggung jawab atasnya.
     */
-    Route::prefix('inventory')->middleware('role:owner,admin_produksi')->group(function () {
+    Route::prefix('inventory')->group(function () {
 
-        Route::get('dashboard', [InventoryController::class, 'dashboard']);
-        Route::get('options', [InventoryController::class, 'options']);
+        Route::middleware('role:owner,admin_gudang,kepala_produksi')->group(function () {
+            Route::get('dashboard', [InventoryController::class, 'dashboard']);
+            Route::get('options', [InventoryController::class, 'options']);
 
-        Route::get('items', [InventoryController::class, 'items']);
-        Route::get('movements', [InventoryController::class, 'movements']);
+            Route::get('items', [InventoryController::class, 'items']);
+            Route::get('movements', [InventoryController::class, 'movements']);
 
-        // Rute export didaftarkan sebelum pola lain agar tidak tertukar.
-        Route::get('export/items', [InventoryController::class, 'exportItems']);
-        Route::get('export/movements', [InventoryController::class, 'exportMovements']);
+            // Rute export didaftarkan sebelum pola lain agar tidak tertukar.
+            Route::get('export/items', [InventoryController::class, 'exportItems']);
+            Route::get('export/movements', [InventoryController::class, 'exportMovements']);
 
-        Route::post('adjustments', [InventoryController::class, 'adjust']);
+            // --- Peringatan perubahan status stok ---
+            Route::get('alerts/unread', [StockAlertController::class, 'unread']);
+            Route::post('alerts/read-all', [StockAlertController::class, 'markAllRead']);
+            Route::patch('alerts/{alert}/read', [StockAlertController::class, 'markRead']);
+            Route::get('alerts', [StockAlertController::class, 'index']);
+        });
 
-        // --- Peringatan perubahan status stok ---
-        Route::get('alerts/unread', [StockAlertController::class, 'unread']);
-        Route::post('alerts/read-all', [StockAlertController::class, 'markAllRead']);
-        Route::patch('alerts/{alert}/read', [StockAlertController::class, 'markRead']);
-        Route::get('alerts', [StockAlertController::class, 'index']);
+        // Satu-satunya endpoint persediaan yang menulis.
+        Route::post('adjustments', [InventoryController::class, 'adjust'])
+            ->middleware('role:owner,admin_gudang');
     });
 
     /*

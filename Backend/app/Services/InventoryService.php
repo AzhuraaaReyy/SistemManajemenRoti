@@ -311,7 +311,7 @@ class InventoryService
                 $sub->where('note', 'like', "%{$v}%")->orWhere('source_id', 'like', "%{$v}%");
             }))
             ->latest('id')
-            ->paginate($filters['per_page'] ?? 20)
+            ->paginate($filters['per_page'] ?? 10)
             ->withQueryString();
     }
 

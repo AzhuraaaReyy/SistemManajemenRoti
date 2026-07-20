@@ -1,5 +1,10 @@
 # Modul 4 — Produksi (Bill of Materials)
 
+> **Hak akses sudah berubah.** Berkas ini menggambarkan pembagian peran
+> saat modul dibangun, ketika sistem masih memakai `admin_produksi`. Sejak
+> 20 Juli 2026 peran itu dipecah menjadi Admin Gudang dan Kepala Produksi —
+> lihat [MIGRASI-PERAN.md](MIGRASI-PERAN.md) untuk pembagian yang berlaku.
+
 Status: **Selesai** · 19 Juli 2026
 Alur: Pilih Produk → Input Jumlah → Hitung Kebutuhan → Cek Stok → Potong Bahan + Buat Batch → Selesaikan → Stok Produk Bertambah
 

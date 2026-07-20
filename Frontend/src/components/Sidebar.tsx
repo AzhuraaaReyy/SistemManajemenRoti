@@ -26,6 +26,14 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+interface SubMenuItem {
+  /** Harus cocok dengan kunci daun di UserRole::allowedMenus() pada backend. */
+  key: string;
+  label: string;
+  path: string;
+  icon: React.ElementType;
+}
+
 interface MenuItem {
   /** Harus cocok dengan nilai di UserRole::allowedMenus() pada backend. */
   key: string;
@@ -35,9 +43,19 @@ interface MenuItem {
   /** Modul yang belum dikerjakan ditandai agar harapan pengguna tetap realistis. */
   segera?: boolean;
   /** Sub-menu; induknya menjadi judul kelompok, bukan tautan. */
-  children?: { label: string; path: string; icon: React.ElementType }[];
+  children?: SubMenuItem[];
 }
 
+/*
+| Sejak peran Admin Produksi dipecah menjadi Admin Gudang dan Kepala Produksi,
+| izin menu berbutir sampai tingkat SUB-MENU.
+|
+| Master Data adalah alasannya: gudang mengurus supplier dan bahan baku, dapur
+| mengurus produk dan resep. Dengan izin setingkat induk saja, keduanya akan
+| melihat kelima sub-menu — termasuk yang ujungnya ditolak server. Menu yang
+| menjanjikan halaman lalu menampilkan 403 lebih membingungkan daripada menu
+| yang memang tidak ada.
+*/
 const SEMUA_MENU: MenuItem[] = [
   { key: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   {
@@ -46,11 +64,11 @@ const SEMUA_MENU: MenuItem[] = [
     path: '/master',
     icon: Database,
     children: [
-      { label: 'Kategori', path: '/master/kategori', icon: FolderTree },
-      { label: 'Supplier', path: '/master/supplier', icon: Truck },
-      { label: 'Bahan Baku', path: '/master/bahan-baku', icon: Package },
-      { label: 'Produk', path: '/master/produk', icon: Cookie },
-      { label: 'Resep (BOM)', path: '/master/resep', icon: BookOpen },
+      { key: 'master.kategori', label: 'Kategori', path: '/master/kategori', icon: FolderTree },
+      { key: 'master.supplier', label: 'Supplier', path: '/master/supplier', icon: Truck },
+      { key: 'master.bahan-baku', label: 'Bahan Baku', path: '/master/bahan-baku', icon: Package },
+      { key: 'master.produk', label: 'Produk', path: '/master/produk', icon: Cookie },
+      { key: 'master.resep', label: 'Resep (BOM)', path: '/master/resep', icon: BookOpen },
     ],
   },
   {
@@ -59,9 +77,9 @@ const SEMUA_MENU: MenuItem[] = [
     path: '/persediaan',
     icon: Boxes,
     children: [
-      { label: 'Dashboard', path: '/persediaan/dashboard', icon: LayoutDashboard },
-      { label: 'Ringkasan Stok', path: '/persediaan/stok', icon: Boxes },
-      { label: 'Riwayat Mutasi', path: '/persediaan/mutasi', icon: History },
+      { key: 'persediaan.dashboard', label: 'Dashboard', path: '/persediaan/dashboard', icon: LayoutDashboard },
+      { key: 'persediaan.stok', label: 'Ringkasan Stok', path: '/persediaan/stok', icon: Boxes },
+      { key: 'persediaan.mutasi', label: 'Riwayat Mutasi', path: '/persediaan/mutasi', icon: History },
     ],
   },
   {
@@ -70,8 +88,8 @@ const SEMUA_MENU: MenuItem[] = [
     path: '/produksi',
     icon: ChefHat,
     children: [
-      { label: 'Dashboard', path: '/produksi/dashboard', icon: LayoutDashboard },
-      { label: 'Batch Produksi', path: '/produksi/batch', icon: Factory },
+      { key: 'produksi.dashboard', label: 'Dashboard', path: '/produksi/dashboard', icon: LayoutDashboard },
+      { key: 'produksi.batch', label: 'Batch Produksi', path: '/produksi/batch', icon: Factory },
     ],
   },
   {
@@ -80,9 +98,9 @@ const SEMUA_MENU: MenuItem[] = [
     path: '/pembelian',
     icon: ShoppingBag,
     children: [
-      { label: 'Dashboard', path: '/pembelian/dashboard', icon: LayoutDashboard },
-      { label: 'Pesanan', path: '/pembelian/pesanan', icon: ClipboardList },
-      { label: 'Penerimaan', path: '/pembelian/penerimaan', icon: PackageCheck },
+      { key: 'pembelian.dashboard', label: 'Dashboard', path: '/pembelian/dashboard', icon: LayoutDashboard },
+      { key: 'pembelian.pesanan', label: 'Pesanan', path: '/pembelian/pesanan', icon: ClipboardList },
+      { key: 'pembelian.penerimaan', label: 'Penerimaan', path: '/pembelian/penerimaan', icon: PackageCheck },
     ],
   },
   {
@@ -91,12 +109,12 @@ const SEMUA_MENU: MenuItem[] = [
     path: '/penjualan',
     icon: ShoppingCart,
     children: [
-      { label: 'Kasir (POS)', path: '/penjualan/kasir', icon: Store },
-      { label: 'Riwayat', path: '/penjualan/riwayat', icon: Receipt },
-      { label: 'Dashboard', path: '/penjualan/dashboard', icon: LayoutDashboard },
+      { key: 'penjualan.kasir', label: 'Kasir (POS)', path: '/penjualan/kasir', icon: Store },
+      { key: 'penjualan.riwayat', label: 'Riwayat', path: '/penjualan/riwayat', icon: Receipt },
+      { key: 'penjualan.dashboard', label: 'Dashboard', path: '/penjualan/dashboard', icon: LayoutDashboard },
     ],
   },
-  { key: 'laporan', label: 'Laporan', path: '/laporan', icon: BarChart3, segera: true },
+  { key: 'laporan', label: 'Laporan', path: '/laporan', icon: BarChart3 },
   { key: 'pengguna', label: 'Manajemen Pengguna', path: '/pengguna', icon: Users },
   { key: 'pengaturan', label: 'Pengaturan', path: '/pengaturan', icon: Settings },
 ];
@@ -110,9 +128,32 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const { user, logout } = useAuth();
 
-  // Daftar menu berasal dari peran yang dikirim server, bukan dari daftar
-  // statis di frontend — satu sumber kebenaran di enum UserRole.
-  const menu = SEMUA_MENU.filter((item) => user?.allowed_menus.includes(item.key));
+  /*
+  | Daftar menu berasal dari peran yang dikirim server, bukan dari daftar
+  | statis di frontend — satu sumber kebenaran di enum UserRole::allowedMenus().
+  |
+  | `?? []` bukan hiasan. Tanpa itu, balasan server yang tidak memuat
+  | `allowed_menus` — versi API yang lebih tua, atau perubahan bentuk balasan —
+  | membuat baris ini melempar galat dan menumbangkan seluruh halaman. Dengan
+  | itu, menunya menyusut menjadi kosong: gagal ke arah aman, tidak pernah
+  | membuka menu yang bukan haknya.
+  */
+  const izin = user?.allowed_menus ?? [];
+
+  /*
+  | Penyaringan dua tingkat.
+  |
+  | Sub-menu disaring lebih dulu, lalu induk yang kehabisan anak ikut hilang.
+  | Urutannya penting: menyaring induk saja akan menampilkan kelompok "Master
+  | Data" berisi lima tautan yang sebagian ditolak server, sedangkan menyaring
+  | anak saja akan menyisakan judul kelompok kosong tanpa satu pun tautan di
+  | bawahnya.
+  */
+  const menu = SEMUA_MENU.map((item) =>
+    item.children
+      ? { ...item, children: item.children.filter((sub) => izin.includes(sub.key)) }
+      : item,
+  ).filter((item) => (item.children ? item.children.length > 0 : izin.includes(item.key)));
 
   return (
     <>
@@ -152,6 +193,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
             >
               <X className="h-5 w-5" />
             </button>
+          </div>
+
+          {/*
+            Peran yang sedang aktif ditulis di kepala menu.
+
+            Ini bukan sekadar hiasan: tanpa penanda ini, menu yang keliru
+            (misalnya sesi lama yang masih tersimpan di tab lain) terlihat
+            persis sama dengan menu yang benar. Dengan label peran di sini,
+            ketidakcocokan langsung terlihat pada pandangan pertama.
+          */}
+          <div className="border-b border-stone-800 px-4 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+              Menu untuk
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-yellow-600">
+              {user?.role_label ?? 'Belum masuk'}
+              <span className="ml-1.5 text-xs font-normal text-stone-500">
+                · {menu.length} menu
+              </span>
+            </p>
           </div>
 
           <nav className="space-y-1 p-4" aria-label="Menu utama">

@@ -31,7 +31,9 @@ class PurchaseSeeder extends Seeder
             return;
         }
 
-        $admin = User::where('email', 'produksi@rotimanis.test')->first();
+        // Pengadaan adalah pekerjaan gudang — sejak peran dipisah, PO contoh
+        // tercatat atas nama Admin Gudang, bukan orang dapur.
+        $admin = User::where('email', 'admin_gudang@rotimanis.test')->first();
         $userId = $admin?->id;
 
         $indofood = Supplier::where('name', 'like', '%Indofood%')->firstOrFail();

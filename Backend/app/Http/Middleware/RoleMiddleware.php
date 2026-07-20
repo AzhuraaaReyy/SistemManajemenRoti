@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Membatasi rute berdasarkan peran pengguna.
  *
- * Pemakaian: ->middleware('role:owner') atau ->middleware('role:owner,admin_produksi')
+ * Pemakaian: ->middleware('role:owner') atau ->middleware('role:owner,admin_gudang')
  */
 class RoleMiddleware
 {

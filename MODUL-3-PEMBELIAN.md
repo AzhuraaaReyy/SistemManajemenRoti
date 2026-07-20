@@ -1,5 +1,10 @@
 # Modul 3 — Pembelian Bahan Baku & Supplier
 
+> **Hak akses sudah berubah.** Berkas ini menggambarkan pembagian peran
+> saat modul dibangun, ketika sistem masih memakai `admin_produksi`. Sejak
+> 20 Juli 2026 peran itu dipecah menjadi Admin Gudang dan Kepala Produksi —
+> lihat [MIGRASI-PERAN.md](MIGRASI-PERAN.md) untuk pembagian yang berlaku.
+
 Status: **Selesai** · 19 Juli 2026 (revisi 1)
 Alur: Supplier → Input Pembelian → Barang Datang → Tambah Stok → Riwayat Pembelian
 

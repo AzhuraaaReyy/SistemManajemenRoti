@@ -17,7 +17,8 @@ interface LoginForm {
 
 const AKUN_DEMO = [
   { label: 'Owner', email: 'owner@rotimanis.test' },
-  { label: 'Admin Produksi', email: 'produksi@rotimanis.test' },
+  { label: 'Admin Gudang', email: 'admin_gudang@rotimanis.test' },
+  { label: 'Kepala Produksi', email: 'kepalaproduksi@rotimanis.test' },
   { label: 'Kasir', email: 'kasir@rotimanis.test' },
 ];
 

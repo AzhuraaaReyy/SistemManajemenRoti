@@ -14,7 +14,7 @@ Stack: React 19 + TypeScript + Tailwind · Laravel 12 + JWT · MySQL 8.4
 | Forgot Password | ✅ | Respons seragam agar daftar email tidak bocor |
 | Reset Password | ✅ | Token sekali pakai, berlaku 60 menit |
 | Manajemen User (CRUD) | ✅ | Khusus Owner, dengan soft delete |
-| Role: Owner / Admin Produksi / Kasir | ✅ | Didefinisikan di satu enum, dipakai backend & frontend |
+| Role: Owner / Admin Gudang / Kepala Produksi / Kasir | ✅ | Didefinisikan di satu enum, dipakai backend & frontend — lihat [MIGRASI-PERAN.md](MIGRASI-PERAN.md) |
 | Middleware Authorization | ✅ | `auth:api` → `active` → `role:...` |
 | JWT Authentication | ✅ | tymon/jwt-auth 2.3, refresh otomatis |
 | Remember Login | ✅ | 60 menit → 30 hari, dan localStorage vs sessionStorage |
@@ -35,7 +35,7 @@ Stack: React 19 + TypeScript + Tailwind · Laravel 12 + JWT · MySQL 8.4
 │ UQ email            VARCHAR  │
 │    email_verified_at TIMESTAMP│
 │    password         VARCHAR  │  ← bcrypt, 12 rounds
-│    role             ENUM     │  ← owner | admin_produksi | kasir
+│    role             ENUM     │  ← owner | admin_gudang | kepala_produksi | kasir
 │    phone            VARCHAR  │
 │    avatar           VARCHAR  │
 │    is_active        BOOLEAN  │  ← nonaktif ≠ dihapus
@@ -198,7 +198,7 @@ Backend/
 │   │   │   ├── ProfileController.php
 │   │   │   └── UserController.php
 │   │   ├── Middleware/
-│   │   │   ├── RoleMiddleware.php          ← 'role:owner,admin_produksi'
+│   │   │   ├── RoleMiddleware.php          ← 'role:owner,admin_gudang'
 │   │   │   └── EnsureUserIsActive.php      ← tolak akun nonaktif di tengah sesi
 │   │   ├── Requests/
 │   │   │   ├── Auth/{Login,ForgotPassword,ResetPassword}Request.php
@@ -374,11 +374,17 @@ npm run dev          # http://localhost:5180
 | Peran | Email | Kata Sandi | Status |
 |---|---|---|---|
 | Owner | `owner@rotimanis.test` | `password123` | Aktif |
-| Admin Produksi | `produksi@rotimanis.test` | `password123` | Aktif |
+| Admin Gudang | `admin_gudang@rotimanis.test` | `password123` | Aktif |
+| Kepala Produksi | `kepalaproduksi@rotimanis.test` | `password123` | Aktif |
 | Kasir | `kasir@rotimanis.test` | `password123` | Aktif |
 | Kasir | `kasir2@rotimanis.test` | `password123` | **Nonaktif** — untuk menguji penolakan login |
 
-Halaman login menyediakan tombol pintasan untuk mengisi ketiga akun aktif.
+Halaman login menyediakan tombol pintasan untuk mengisi keempat akun aktif.
+
+> `produksi@rotimanis.test` sudah tidak ada sejak peran Admin Produksi dipecah
+> menjadi Admin Gudang dan Kepala Produksi. Akun Budi Santoso tidak dihapus —
+> hanya email dan perannya yang berubah, sehingga riwayat produksi dan pembelian
+> atas namanya tetap tersambung. Lihat [MIGRASI-PERAN.md](MIGRASI-PERAN.md).
 
 ### 7.5 Menguji Reset Password Tanpa SMTP
 

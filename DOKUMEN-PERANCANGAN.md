@@ -938,8 +938,8 @@ Anda ingin mengerjakan **per modul, bukan sekaligus**. Berikut kerangka kerja ya
 | M7 Retur | ⬜ Belum mulai | — | Jenis mutasi `return` sudah disiapkan; dibedakan dari pembatalan penjualan (`sale_void`) yang sudah ada di M6 |
 | M8 Kedaluwarsa (FEFO) | ⬜ Belum mulai | — | |
 | M9 Forecast | ⬜ Belum mulai | — | |
-| M10 Laba Kotor | ⬜ Belum mulai | — | |
-| M11 Dashboard & Notifikasi | ⬜ Belum mulai | — | Sebagian UI sudah ada |
+| M10 Laporan ★ | ✅ Selesai | 9 | Tujuh laporan formal, snapshot stok historis, export PDF & Excel — 18 skenario diuji. Lihat [MODUL-9-LAPORAN.md](MODUL-9-LAPORAN.md) |
+| M11 Dashboard & Notifikasi | 🟡 Sebagian | 8 | **Dashboard Owner selesai** — agregasi lintas modul, Recharts, auto-refresh — 18 skenario diuji. Lihat [MODUL-8-DASHBOARD-OWNER.md](MODUL-8-DASHBOARD-OWNER.md). Notifikasi stok sudah ada di M5; tersisa notifikasi lintas modul lain |
 | M12 Barcode / QR | ⬜ Belum mulai | — | |
 | M13 Stock Opname | ⬜ Belum mulai | — | Penyesuaian per barang sudah ada di M5; tersisa opname seluruh gudang dalam satu sesi |
 
@@ -951,6 +951,8 @@ Anda ingin mengerjakan **per modul, bukan sekaligus**. Berikut kerangka kerja ya
 > | Prompt 5 — Tracking Produksi | **M4b** — kelanjutan langsung Modul Produksi |
 > | Prompt 6 — Inventory Management | **M5** — Persediaan & Ledger |
 > | Prompt 7 — Penjualan (POS) | **M6** — Penjualan (POS) |
+> | Prompt 8 — Dashboard Owner | **M11** — Dashboard & Notifikasi (sebagian) |
+> | Prompt 9 — Laporan | **M10** — Laporan |
 >
 > Nama berkas dokumentasi mengikuti nomor prompt
 > (`MODUL-5-TRACKING-PRODUKSI.md`, `MODUL-6-INVENTORY.md`), sedangkan papan

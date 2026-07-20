@@ -18,12 +18,26 @@ class UserSeeder extends Seeder
                 'role' => UserRole::OWNER->value,
                 'phone' => '081234567890',
             ],
+            /*
+            | Budi memegang akun yang dulu bernama produksi@rotimanis.test.
+            |
+            | Migrasi 2026_07_20_100100 mengganti nama email pada baris yang
+            | SAMA, bukan membuat akun baru — sehingga seluruh batch produksi
+            | dan penerimaan PO yang tercatat atas namanya tetap tersambung.
+            */
             [
                 'name' => 'Budi Santoso',
-                'email' => 'produksi@rotimanis.test',
+                'email' => 'kepalaproduksi@rotimanis.test',
                 'password' => 'password123',
-                'role' => UserRole::ADMIN_PRODUKSI->value,
+                'role' => UserRole::KEPALA_PRODUKSI->value,
                 'phone' => '081234567891',
+            ],
+            [
+                'name' => 'Sri Wahyuni',
+                'email' => 'admin_gudang@rotimanis.test',
+                'password' => 'password123',
+                'role' => UserRole::ADMIN_GUDANG->value,
+                'phone' => '081234567894',
             ],
             [
                 'name' => 'Dewi Anggraini',

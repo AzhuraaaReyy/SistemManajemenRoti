@@ -33,7 +33,7 @@ class ProductionSeeder extends Seeder
             return;
         }
 
-        $operator = User::where('email', 'produksi@rotimanis.test')->first();
+        $operator = User::where('email', 'kepalaproduksi@rotimanis.test')->first();
         $operatorId = $operator?->id;
 
         $rotiManis = Product::where('name', 'like', '%Roti Manis%')->first();

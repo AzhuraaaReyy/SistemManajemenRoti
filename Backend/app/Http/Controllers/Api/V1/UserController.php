@@ -64,11 +64,21 @@ class UserController extends Controller
             'total' => User::count(),
             'aktif' => User::where('is_active', true)->count(),
             'nonaktif' => User::where('is_active', false)->count(),
-            'per_peran' => collect(UserRole::cases())->map(fn (UserRole $role) => [
-                'role' => $role->value,
-                'label' => $role->label(),
-                'jumlah' => (int) ($perRole[$role->value] ?? 0),
-            ])->values(),
+            /*
+            | Peran usang hanya ditampilkan bila MASIH ada penghuninya.
+            |
+            | Menampilkannya selalu berarti sebuah baris "Admin Produksi: 0"
+            | menetap di layar statistik selamanya; menyembunyikannya selalu
+            | berarti akun yang tertinggal di peran itu tidak pernah terlihat.
+            | Yang benar adalah muncul tepat ketika ada yang perlu dibereskan.
+            */
+            'per_peran' => collect(UserRole::cases())
+                ->filter(fn (UserRole $role) => $role->isAssignable() || ($perRole[$role->value] ?? 0) > 0)
+                ->map(fn (UserRole $role) => [
+                    'role' => $role->value,
+                    'label' => $role->label(),
+                    'jumlah' => (int) ($perRole[$role->value] ?? 0),
+                ])->values(),
         ], 'Statistik pengguna berhasil diambil.');
     }
 

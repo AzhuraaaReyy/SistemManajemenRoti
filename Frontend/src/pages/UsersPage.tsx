@@ -31,8 +31,11 @@ import type {
 
 const WARNA_PERAN: Record<UserRole, 'info' | 'warning' | 'neutral'> = {
   owner: 'info',
-  admin_produksi: 'warning',
+  admin_gudang: 'warning',
+  kepala_produksi: 'warning',
   kasir: 'neutral',
+  // Peran usang — tampil netral supaya tidak terbaca sebagai peran aktif.
+  admin_produksi: 'neutral',
 };
 
 const formatTanggal = (iso: string | null): string => {

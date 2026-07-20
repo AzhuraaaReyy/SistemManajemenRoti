@@ -178,7 +178,7 @@ class SaleController extends Controller
             )
             ->orderBy($filters['sort_by'] ?? 'created_at', $filters['sort_dir'] ?? 'desc')
             ->orderByDesc('id')
-            ->paginate($filters['per_page'] ?? 15)
+            ->paginate($filters['per_page'] ?? 10)
             ->withQueryString();
 
         return $this->paginated(

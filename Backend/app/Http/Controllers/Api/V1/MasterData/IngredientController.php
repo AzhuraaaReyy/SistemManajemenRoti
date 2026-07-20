@@ -117,7 +117,7 @@ class IngredientController extends Controller
         $rows = $ingredient->stockLedgers()
             ->ofSource($filters['source_type'] ?? null)
             ->with('user:id,name')
-            ->paginate($filters['per_page'] ?? 20);
+            ->paginate($filters['per_page'] ?? 10);
 
         return $this->paginated(
             $rows,

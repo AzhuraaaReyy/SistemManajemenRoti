@@ -1,4 +1,18 @@
-export type UserRole = 'owner' | 'admin_produksi' | 'kasir';
+/**
+ * Harus sama persis dengan enum UserRole pada backend.
+ *
+ * `admin_produksi` USANG — peran itu dipecah menjadi admin_gudang dan
+ * kepala_produksi (lihat migrasi 2026_07_20_100100). Nilainya tetap dicantumkan
+ * di sini karena backend masih bisa mengirimkannya untuk akun yang belum
+ * terpindahkan; menghapusnya dari tipe hanya membuat TypeScript berbohong soal
+ * apa yang mungkin datang dari server.
+ */
+export type UserRole =
+  | 'owner'
+  | 'admin_gudang'
+  | 'kepala_produksi'
+  | 'kasir'
+  | 'admin_produksi';
 
 export interface User {
   id: number;

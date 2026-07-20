@@ -35,7 +35,7 @@ export const SalesHistoryPage: React.FC = () => {
   const { items, meta, loading, filters, setFilter, resetFilters, goToPage, reload, hasActiveFilters } =
     useResourceList<Sale>({
       fetcher,
-      initialFilters: { sort_by: 'created_at', sort_dir: 'desc', per_page: 15 },
+      initialFilters: { sort_by: 'created_at', sort_dir: 'desc', per_page: 10 },
       errorMessage: 'Gagal memuat riwayat penjualan.',
     });
 

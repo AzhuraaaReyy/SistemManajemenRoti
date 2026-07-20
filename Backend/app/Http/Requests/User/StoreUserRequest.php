@@ -24,7 +24,8 @@ class StoreUserRequest extends FormRequest
             'name' => ['required', 'string', 'min:3', 'max:100'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->whereNull('deleted_at')],
             'password' => ['required', 'string', 'confirmed', Password::min(8)->letters()->numbers()],
-            'role' => ['required', Rule::in(UserRole::values())],
+            // assignableValues(): peran usang tidak bisa diberikan lagi.
+            'role' => ['required', Rule::in(UserRole::assignableValues())],
             'phone' => ['nullable', 'string', 'regex:/^[0-9+\-\s()]{8,20}$/'],
             'is_active' => ['sometimes', 'boolean'],
         ];

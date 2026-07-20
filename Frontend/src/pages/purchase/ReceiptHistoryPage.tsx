@@ -27,7 +27,7 @@ export const ReceiptHistoryPage: React.FC = () => {
   const { items, meta, loading, filters, setFilter, resetFilters, goToPage, hasActiveFilters } =
     useResourceList<PurchaseReceipt>({
       fetcher,
-      initialFilters: { per_page: 15 },
+      initialFilters: { per_page: 10 },
       errorMessage: 'Gagal memuat riwayat penerimaan.',
     });
 

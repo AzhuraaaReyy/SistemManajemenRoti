@@ -1,5 +1,10 @@
 # Modul 6 — Inventory Management
 
+> **Hak akses sudah berubah.** Berkas ini menggambarkan pembagian peran
+> saat modul dibangun, ketika sistem masih memakai `admin_produksi`. Sejak
+> 20 Juli 2026 peran itu dipecah menjadi Admin Gudang dan Kepala Produksi —
+> lihat [MIGRASI-PERAN.md](MIGRASI-PERAN.md) untuk pembagian yang berlaku.
+
 > Pusat monitoring seluruh pergerakan stok, bahan baku maupun produk jadi.
 >
 > Modul ini **murni membaca**. Ia tidak membuat sumber data baru — seluruh

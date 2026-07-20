@@ -109,7 +109,7 @@ class ProfileController extends Controller
         $logs = $request->user()
             ->activityLogs()
             ->latest()
-            ->paginate(15);
+            ->paginate(10);
 
         return $this->paginated(
             $logs,

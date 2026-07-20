@@ -1,6 +1,11 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { GuestRoute, ProtectedRoute, RoleRoute } from './components/auth/RouteGuards';
+import {
+  GuestRoute,
+  MasterIndexRedirect,
+  ProtectedRoute,
+  RoleRoute,
+} from './components/auth/RouteGuards';
 import { LoadingScreen } from './components/ui/Feedback';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
@@ -24,16 +29,24 @@ const ForgotPasswordPage = lazy(() =>
 const ResetPasswordPage = lazy(() =>
   import('./pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })),
 );
-const DashboardPage = lazy(() =>
-  import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+// Beranda dipilih menurut peran: Owner mendapat ringkasan lintas modul
+// (Modul 8), peran lain mendapat halaman beranda yang lama.
+const DashboardHome = lazy(() =>
+  import('./pages/DashboardHome').then((m) => ({ default: m.DashboardHome })),
 );
 const ProfilePage = lazy(() =>
   import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })),
 );
 const UsersPage = lazy(() => import('./pages/UsersPage').then((m) => ({ default: m.UsersPage })));
-const ComingSoonPage = lazy(() =>
-  import('./pages/ComingSoonPage').then((m) => ({ default: m.ComingSoonPage })),
-);
+
+/*
+| ComingSoonPage sudah tidak dipakai rute mana pun.
+|
+| Ia menjadi penanda modul yang belum dikerjakan sejak Modul 1; /laporan adalah
+| rute terakhir yang memakainya, dan Modul 9 menggantinya dengan halaman
+| sungguhan. Berkasnya sengaja dibiarkan ada — modul yang belum dibangun
+| (Retur, Kedaluwarsa, Forecast, Barcode, Stock Opname) akan memerlukannya lagi.
+*/
 
 // Modul 2 — Master Data
 const CategoriesPage = lazy(() =>
@@ -107,6 +120,11 @@ const SettingsPage = lazy(() =>
   import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
 );
 
+// Modul 9 — Laporan
+const ReportsPage = lazy(() =>
+  import('./pages/ReportsPage').then((m) => ({ default: m.ReportsPage })),
+);
+
 /**
  * Susunan rute.
  *
@@ -135,13 +153,23 @@ const App: React.FC = () => (
             {/* --- Privat --- */}
             <Route element={<ProtectedRoute />}>
               <Route element={<DashboardLayout />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/dashboard" element={<DashboardHome />} />
                 <Route path="/profil" element={<ProfilePage />} />
 
                 {/* Khusus Owner */}
                 <Route element={<RoleRoute allow={['owner']} />}>
                   <Route path="/pengguna" element={<UsersPage />} />
                   <Route path="/pengaturan" element={<SettingsPage />} />
+
+                  {/*
+                    Laporan hanya untuk Owner — sesuai `laporan` yang memang
+                    cuma ada di menu Owner. Sebelumnya rute ini berada di luar
+                    penjaga peran, sehingga Kasir yang mengetik /laporan
+                    langsung di bilah alamat tetap bisa membukanya meski
+                    menunya tidak pernah tampil.
+                  */}
+                  {/* Modul 9 — Laporan */}
+                  <Route path="/laporan" element={<ReportsPage />} />
                 </Route>
 
                 {/*
@@ -157,22 +185,35 @@ const App: React.FC = () => (
 
                 {/*
                   Modul 2 — Master Data.
+
                   Kasir tidak diberi akses: ia hanya butuh daftar produk untuk
-                  menjual, dan itu disediakan endpoint penjualan pada Modul 6.
+                  menjual, dan itu disediakan endpoint penjualan pada Modul 7.
+
+                  Sisanya dipilah antara gudang dan dapur, mengikuti penjagaan
+                  yang sama di routes/api.php. Kategori dipakai bersama karena
+                  satu tabelnya memuat kategori bahan DAN kategori produk.
                 */}
-                <Route element={<RoleRoute allow={['owner', 'admin_produksi']} />}>
-                  <Route path="/master" element={<Navigate to="/master/bahan-baku" replace />} />
+                <Route element={<RoleRoute allow={['owner', 'admin_gudang', 'kepala_produksi']} />}>
+                  <Route path="/master" element={<MasterIndexRedirect />} />
                   <Route path="/master/kategori" element={<CategoriesPage />} />
+                </Route>
+
+                {/* Modul 2 & 3 — wilayah gudang */}
+                <Route element={<RoleRoute allow={['owner', 'admin_gudang']} />}>
                   <Route path="/master/supplier" element={<SuppliersPage />} />
                   <Route path="/master/bahan-baku" element={<IngredientsPage />} />
-                  <Route path="/master/produk" element={<ProductsPage />} />
-                  <Route path="/master/resep" element={<RecipesPage />} />
 
                   {/* Modul 3 — Pembelian Bahan Baku */}
                   <Route path="/pembelian" element={<Navigate to="/pembelian/dashboard" replace />} />
                   <Route path="/pembelian/dashboard" element={<PurchaseDashboardPage />} />
                   <Route path="/pembelian/pesanan" element={<PurchaseOrdersPage />} />
                   <Route path="/pembelian/penerimaan" element={<ReceiptHistoryPage />} />
+                </Route>
+
+                {/* Modul 2, 4 & 5 — wilayah dapur */}
+                <Route element={<RoleRoute allow={['owner', 'kepala_produksi']} />}>
+                  <Route path="/master/produk" element={<ProductsPage />} />
+                  <Route path="/master/resep" element={<RecipesPage />} />
 
                   {/* Modul 4 — Produksi (Bill of Materials) */}
                   <Route path="/produksi" element={<Navigate to="/produksi/dashboard" replace />} />
@@ -185,8 +226,18 @@ const App: React.FC = () => (
                     tertangkap pola :id.
                   */}
                   <Route path="/produksi/batch/:id" element={<ProductionTrackingPage />} />
+                </Route>
 
-                  {/* Modul 6 — Inventory Management */}
+                {/*
+                  Modul 6 — Inventory Management.
+
+                  Dibuka untuk gudang DAN dapur. Kepala produksi yang tidak bisa
+                  melihat stok bahan tidak bisa merencanakan batch — ia hanya
+                  akan tahu bahannya kurang setelah pembuatan batch ditolak.
+                  Penyesuaian stok manual tetap milik gudang, ditegakkan di
+                  server pada endpoint inventory/adjustments.
+                */}
+                <Route element={<RoleRoute allow={['owner', 'admin_gudang', 'kepala_produksi']} />}>
                   <Route path="/persediaan" element={<Navigate to="/persediaan/dashboard" replace />} />
                   <Route path="/persediaan/dashboard" element={<InventoryDashboardPage />} />
                   <Route path="/persediaan/stok" element={<StockItemsPage />} />
@@ -194,21 +245,18 @@ const App: React.FC = () => (
                 </Route>
 
                 {/*
-                  Modul yang belum dikerjakan (M5–M10).
-
                   Komponen prototipe di src/components/ sengaja BELUM dipasang.
                   Keputusan iterasi 1: setiap komponen disambungkan sekali saja,
                   langsung ke API sungguhan pada modulnya masing-masing.
-
-                    /laporan → M10, laporan laba kotor
 
                   BOM.tsx        digantikan /master/resep   (M2)
                   Purchasing.tsx digantikan /pembelian/*    (M3)
                   Production.tsx digantikan /produksi/*     (M4)
                   Dashboard.tsx  digantikan /persediaan/*   (M6)
                   POS.tsx        digantikan /penjualan/*    (M7)
+
+                  Rute /laporan (M10) berada di blok khusus Owner di atas.
                 */}
-                <Route path="/laporan" element={<ComingSoonPage />} />
               </Route>
             </Route>
 

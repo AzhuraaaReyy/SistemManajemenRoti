@@ -4,6 +4,7 @@ import { StockAdjustmentModal } from '../../components/inventory/StockAdjustment
 import { PageHeader } from '../../components/data/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Badge, EmptyState, TableSkeleton } from '../../components/ui/Feedback';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { pesanError } from '../../lib/api';
 import { angka, rupiah } from '../../lib/format';
@@ -29,6 +30,18 @@ type SortKey = 'status' | 'name' | 'code' | 'stock' | 'value';
  */
 export const StockItemsPage: React.FC = () => {
   const toast = useToast();
+  const { user } = useAuth();
+
+  /*
+  | Kepala Produksi boleh MELIHAT stok, tapi tidak menyesuaikannya — koreksi
+  | terhadap hitungan fisik adalah tanggung jawab gudang, dan servernya menolak
+  | endpoint `inventory/adjustments` untuk peran lain.
+  |
+  | Kolomnya ikut disembunyikan, bukan sekadar tombolnya dinonaktifkan. Tombol
+  | mati yang tidak pernah bisa ditekan hanya membuat orang mengira haknya
+  | sedang bermasalah.
+  */
+  const bolehSesuaikan = user?.role === 'owner' || user?.role === 'admin_gudang';
 
   const [items, setItems] = useState<StockItem[]>([]);
   const [nilaiTotal, setNilaiTotal] = useState(0);
@@ -233,9 +246,11 @@ export const StockItemsPage: React.FC = () => {
                   <Kolom label="Status" />
                   <Kolom label="Perkiraan Habis" align="right" />
                   <Kolom label="Nilai" sortKey="value" align="right" />
-                  <th scope="col" className="px-3 py-2.5 text-right text-xs font-bold uppercase text-stone-500">
-                    Aksi
-                  </th>
+                  {bolehSesuaikan && (
+                    <th scope="col" className="px-3 py-2.5 text-right text-xs font-bold uppercase text-stone-500">
+                      Aksi
+                    </th>
+                  )}
                 </tr>
               </thead>
 
@@ -293,17 +308,19 @@ export const StockItemsPage: React.FC = () => {
                       {rupiah(i.stock_value)}
                     </td>
 
-                    <td className="px-3 py-2.5 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setSesuaikan(i)}
-                        className="rounded-lg p-2 text-stone-400 transition hover:bg-yellow-50 hover:text-yellow-700"
-                        aria-label={`Sesuaikan stok ${i.name}`}
-                        title="Penyesuaian stok manual"
-                      >
-                        <ClipboardCheck className="h-4 w-4" />
-                      </button>
-                    </td>
+                    {bolehSesuaikan && (
+                      <td className="px-3 py-2.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setSesuaikan(i)}
+                          className="rounded-lg p-2 text-stone-400 transition hover:bg-yellow-50 hover:text-yellow-700"
+                          aria-label={`Sesuaikan stok ${i.name}`}
+                          title="Penyesuaian stok manual"
+                        >
+                          <ClipboardCheck className="h-4 w-4" />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -318,7 +335,7 @@ export const StockItemsPage: React.FC = () => {
                   <td className="px-3 py-2.5 text-right text-base font-bold tabular-nums text-stone-900">
                     {rupiah(nilaiTotal)}
                   </td>
-                  <td />
+                  {bolehSesuaikan && <td />}
                 </tr>
               </tfoot>
             </table>

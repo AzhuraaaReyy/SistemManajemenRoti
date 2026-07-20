@@ -27,7 +27,7 @@ export const StockMovementsPage: React.FC = () => {
   const { items, meta, loading, filters, setFilter, resetFilters, goToPage, hasActiveFilters } =
     useResourceList<StockMovement>({
       fetcher,
-      initialFilters: { per_page: 20 },
+      initialFilters: { per_page: 10 },
       errorMessage: 'Gagal memuat riwayat mutasi stok.',
     });
 
